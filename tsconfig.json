@@ -1,20 +1,17 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "target": "es2020",
     "moduleResolution": "node",
-    "esModuleInterop": true,
+    "module": "commonjs",
+    "strict": true,
     "sourceMap": true,
-    "jsx": "react",
+    "target": "es2017",
+    "esModuleInterop": true,
+    "rootDir": "src",
     "outDir": "build",
-    "baseUrl": "./src",
-    "paths": {
-      "~*": ["./*"]
-    },
-    "plugins": [
-      {
-        "name": "typescript-styled-plugin"
-      }
-    ]
-  }
+    "types": ["node"],
+    "lib": ["es2017", "dom"],
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
+  },
+  "include": ["src/**/*"]
 }
