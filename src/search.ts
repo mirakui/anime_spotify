@@ -31,13 +31,11 @@ async function login(clientId: string, clientSecret: string) {
 
 async function main() {
   const accessToken = await login(clientId, clientSecret);
-  console.log("accessToken=", accessToken);
+
   const ax = axios.create({
     baseURL: "https://api.spotify.com",
     headers: {
-      Authorization: "Bearer " + accessToken,
-      Accept: "application/json",
-      "Content-Type": "application/json"
+      Authorization: "Bearer " + accessToken
     }
   });
 
