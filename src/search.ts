@@ -5,19 +5,16 @@ const clientId = process.env.SPOTIFY_CLIENT_ID || "";
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET || "";
 
 async function login(clientId: string, clientSecret: string) {
-  const ax = axios.create({
-    baseURL: "https://accounts.spotify.com",
-    headers: {
-      Authorization:
-        "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64")
-    }
-  });
   try {
     const params = {
       grant_type: "client_credentials"
     };
-    const res = await ax.post("/api/token", querystring.stringify(params), {
+    const res = await axios.post("/api/token", querystring.stringify(params), {
+      baseURL: "https://accounts.spotify.com",
       headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(clientId + ":" + clientSecret).toString("base64"),
         "Content-Type": "application/x-www-form-urlencoded"
       }
     });
