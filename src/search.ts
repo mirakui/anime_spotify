@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import Axios, { AxiosResponse } from "axios";
 import querystring from "querystring";
 
 const clientId = process.env.SPOTIFY_CLIENT_ID || "";
@@ -9,7 +9,7 @@ async function login(clientId: string, clientSecret: string) {
     const params = {
       grant_type: "client_credentials"
     };
-    const res = await axios.post("/api/token", querystring.stringify(params), {
+    const res = await Axios.post("/api/token", querystring.stringify(params), {
       baseURL: "https://accounts.spotify.com",
       headers: {
         Authorization:
@@ -29,7 +29,7 @@ async function login(clientId: string, clientSecret: string) {
 async function main() {
   const accessToken = await login(clientId, clientSecret);
 
-  const ax = axios.create({
+  const ax = Axios.create({
     baseURL: "https://api.spotify.com",
     headers: {
       Authorization: "Bearer " + accessToken
@@ -38,7 +38,8 @@ async function main() {
 
   ax.get("/v1/search", {
     params: {
-      q: "椎名林檎",
+      // q: "track:究極アンバランス! artist:純情のアフィリア",
+      q: "track:Alright artist:Kendrick Lamar",
       type: "track",
       market: "JP"
     }
