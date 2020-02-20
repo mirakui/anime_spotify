@@ -7,16 +7,34 @@ async function fetchProgramList() {
   const onairUrl = baseUrl + "/data/n.php?m=onair&genre=anison";
   let res = await Axios.get(onairUrl);
   const $ = cheerio.load(res.data);
-  const items = $('table.sorted td[headers="program"] a');
+  const trs = $("table.sorted tbody tr");
+  let result = [];
 
-  for (let i = 0; i < items.length; i++) {
+  for (let i = 0; i < trs.length; i++) {
     try {
-      const item = $(items[i]);
-      const programId: number = +(item.attr("href")?.match(/\d+/) ?? [])[0];
+      const tdGenre = $('td[headers="genre"]', trs[i]);
+      if (tdGenre.text() != "テレビアニメーション") {
+        continue;
+      }
+      const tdProgram = $('td[headers="program"] a', trs[i]);
+      const tdBbs = $('td[headers="bbs"]', trs[i]);
+      const tdWeek = $('td[headers="week"]', trs[i]);
+      const tdTime = $('td[headers="time"]', trs[i]);
+      const programId: number = +(tdProgram.attr("href")?.match(/\d+/) ??
+        [])[0];
       const songs = await fetchSongList(programId);
-      console.debug(item.text(), programId, songs);
+      const data = {
+        program: tdProgram.text().trim(),
+        bbs: tdBbs.text().trim(),
+        week: tdWeek.text().trim(),
+        time: tdTime.text().trim(),
+        songs: songs
+      };
+      console.debug(data);
+      result.push(data);
     } catch (err) {
       console.debug(err);
+      process.abort();
     }
   }
 }
@@ -52,6 +70,9 @@ async function fetchSongList(programId: number) {
     const tdLyrics = $('td[headers="lyrics"]', trs[i]);
     const tdCompose = $('td[headers="compose"]', trs[i]);
     const tdArrange = $('td[headers="arrange"]', trs[i]);
+    if (tdSong.text() == "") {
+      continue;
+    }
     songs[i] = {
       oped: tdOped.text().trim(),
       song: tdSong.text().trim(),
