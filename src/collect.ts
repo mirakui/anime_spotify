@@ -17,18 +17,13 @@ async function fetchProgramList() {
         continue;
       }
       const tdProgram = $('td[headers="program"] a', trs[i]);
-      const tdBbs = $('td[headers="bbs"]', trs[i]);
-      const tdWeek = $('td[headers="week"]', trs[i]);
-      const tdTime = $('td[headers="time"]', trs[i]);
       const programId: number = +(tdProgram.attr("href")?.match(/\d+/) ??
         [])[0];
-      const songs = await fetchSongList(programId);
+      const program = await fetchProgram(programId);
       const data = {
         program: tdProgram.text().trim(),
-        bbs: tdBbs.text().trim(),
-        week: tdWeek.text().trim(),
-        time: tdTime.text().trim(),
-        songs: songs
+        meta: program.meta,
+        songs: program.songs
       };
       console.debug(data);
       result.push(data);
@@ -56,10 +51,7 @@ function parseCellText(node: Cheerio, $: CheerioStatic) {
   return result;
 }
 
-async function fetchSongList(programId: number) {
-  const programUrl = baseUrl + "/data/program/" + programId + ".html";
-  const res = await Axios.get(programUrl);
-  const $ = cheerio.load(res.data);
+function parseSongListFromProgram($: CheerioStatic) {
   const trs = $("table.sorted tbody tr");
 
   let songs = [];
@@ -83,6 +75,58 @@ async function fetchSongList(programId: number) {
     };
   }
   return songs;
+}
+
+function parseMetaInfoFromProgram($: CheerioStatic) {
+  const tables = $("table.list");
+  let isMetaTable = false;
+  for (let i = 0; i < tables.length; i++) {
+    const ths = $("thead tr th.list", tables[i]);
+    for (let j = 0; j < ths.length; j++) {
+      const th = $(ths[j]);
+      if (th.text().trim() == "放映局") {
+        isMetaTable = true;
+        break;
+      }
+    }
+    if (isMetaTable) {
+      const trs = $("tbody tr", tables[i]);
+      const tds = $("td.list", trs[trs.length - 1]);
+      const bbs = $(tds[0])
+        .text()
+        .trim();
+      const dateFrom = $(tds[1])
+        .text()
+        .trim();
+      const dateTo = $(tds[3])
+        .text()
+        .trim();
+      const week = $(tds[4])
+        .text()
+        .trim();
+      const time = $(tds[5])
+        .text()
+        .split(/ *- */);
+      return {
+        bbs: bbs,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        week: week,
+        timeFrom: time[0],
+        timeTo: time[1]
+      };
+    }
+  }
+  return null;
+}
+
+async function fetchProgram(programId: number) {
+  const programUrl = baseUrl + "/data/program/" + programId + ".html";
+  const res = await Axios.get(programUrl);
+  const $ = cheerio.load(res.data);
+  const meta = parseMetaInfoFromProgram($);
+  const songs = parseSongListFromProgram($);
+  return { meta: meta, songs: songs };
 }
 
 async function main() {
