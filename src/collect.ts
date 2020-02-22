@@ -13,7 +13,7 @@ async function fetchProgramList() {
   for (let i = 0; i < trs.length; i++) {
     try {
       const tdGenre = $('td[headers="genre"]', trs[i]);
-      if (tdGenre.text() != "テレビアニメーション") {
+      if (!tdGenre.text().match(/アニメーション/)) {
         continue;
       }
       const tdProgram = $('td[headers="program"] a', trs[i]);
