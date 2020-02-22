@@ -149,10 +149,10 @@ function seasonToMonth(season: string) {
 async function main() {
   const months = seasonToMonth("winter");
   const year = 2020;
-  let result: any[] = [];
-  for (let month of months) {
-    result = result.concat(await fetchProgramList(year, month));
-  }
+  const result = months.map(async month => {
+    return await fetchProgramList(year, month);
+  });
+  console.debug(result);
 }
 
 main();
