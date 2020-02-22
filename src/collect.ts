@@ -1,8 +1,13 @@
 import cheerio from "cheerio";
 import Axios from "axios";
 import yargs from "yargs";
+import fs from "fs";
 
 const baseUrl = "http://anison.info";
+Axios.interceptors.request.use(request => {
+  console.debug("Axios:", request.url);
+  return request;
+});
 
 async function fetchProgramList(year: number, month: number) {
   const onairUrl =
@@ -28,7 +33,7 @@ async function fetchProgramList(year: number, month: number) {
         ...program.meta,
         songs: program.songs
       };
-      console.debug(data);
+      console.debug("Program:", data.program);
       result.push(data);
     } catch (err) {
       console.debug(err);
@@ -173,10 +178,16 @@ async function main() {
     }).argv;
 
   const months = seasonToMonth(argv.season);
-  const result = months.map(async month => {
-    return await fetchProgramList(argv.year, month);
-  });
-  console.debug(result);
+  let result: any = [];
+  for (let month of months) {
+    result = result.concat(await fetchProgramList(argv.year, month));
+  }
+
+  const programsJsonPath = "programs.json";
+  const resultJson = JSON.stringify(result);
+  fs.writeFileSync(programsJsonPath, resultJson);
+
+  console.log("Wrote", programsJsonPath);
 }
 
 main();
