@@ -1,11 +1,12 @@
 import cheerio from "cheerio";
 import Axios from "axios";
+import yargs from "yargs";
 
 const baseUrl = "http://anison.info";
 
 async function fetchProgramList(year: number, month: number) {
   const onairUrl =
-    baseUrl + `/data/y.php?m=pro&genre=anison&year=&${year}&month=${month}`;
+    baseUrl + `/data/y.php?m=pro&genre=anison&year=${year}&month=${month}`;
   let res = await Axios.get(onairUrl);
   const $ = cheerio.load(res.data);
   const trs = $("table.sorted tbody tr");
@@ -132,25 +133,48 @@ async function fetchProgram(programId: number) {
   return { meta: meta, songs: songs };
 }
 
-function seasonToMonth(season: string) {
+type SeasonString = "winter" | "spring" | "summer" | "autumn";
+
+function seasonToMonth(season: SeasonString) {
   const table: { [key: string]: number[] } = {
     winter: [1, 2, 3],
     spring: [4, 5, 6],
     summer: [7, 8, 9],
     autumn: [10, 11, 12]
   };
-  if (season in table) {
-    return table[season];
+  return table[season];
+}
+
+function getCurrentSeason(date: Date): SeasonString {
+  const month = date.getMonth() + 1;
+  if (month in [1, 2, 3]) {
+    return "winter";
+  } else if (month in [4, 5, 6]) {
+    return "spring";
+  } else if (month in [7, 8, 9]) {
+    return "summer";
+  } else if (month in [10, 11, 12]) {
+    return "autumn";
   } else {
-    throw `Unexpected season string: ${season}`;
+    throw `Unknown month: ${month}`;
   }
 }
 
 async function main() {
-  const months = seasonToMonth("winter");
-  const year = 2020;
+  const now = new Date();
+  const argv = yargs
+    .option("year", {
+      type: "number",
+      default: now.getFullYear()
+    })
+    .option("season", {
+      choices: ["winter", "spring", "summer", "autumn"],
+      default: getCurrentSeason(now)
+    }).argv;
+
+  const months = seasonToMonth(argv.season);
   const result = months.map(async month => {
-    return await fetchProgramList(year, month);
+    return await fetchProgramList(argv.year, month);
   });
   console.debug(result);
 }
