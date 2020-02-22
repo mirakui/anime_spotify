@@ -3,8 +3,9 @@ import Axios from "axios";
 
 const baseUrl = "http://anison.info";
 
-async function fetchProgramList() {
-  const onairUrl = baseUrl + "/data/n.php?m=onair&genre=anison";
+async function fetchProgramList(year: number, month: number) {
+  const onairUrl =
+    baseUrl + `/data/y.php?m=pro&genre=anison&year=&${year}&month=${month}`;
   let res = await Axios.get(onairUrl);
   const $ = cheerio.load(res.data);
   const trs = $("table.sorted tbody tr");
@@ -20,9 +21,10 @@ async function fetchProgramList() {
       const programId: number = +(tdProgram.attr("href")?.match(/\d+/) ??
         [])[0];
       const program = await fetchProgram(programId);
-      const data = {
+      let data = {
         program: tdProgram.text().trim(),
-        meta: program.meta,
+        genre: tdGenre.text().trim(),
+        ...program.meta,
         songs: program.songs
       };
       console.debug(data);
@@ -32,6 +34,7 @@ async function fetchProgramList() {
       process.abort();
     }
   }
+  return result;
 }
 
 function parseCellText(node: Cheerio, $: CheerioStatic) {
@@ -117,7 +120,7 @@ function parseMetaInfoFromProgram($: CheerioStatic) {
       };
     }
   }
-  return null;
+  return {};
 }
 
 async function fetchProgram(programId: number) {
@@ -129,8 +132,27 @@ async function fetchProgram(programId: number) {
   return { meta: meta, songs: songs };
 }
 
+function seasonToMonth(season: string) {
+  const table: { [key: string]: number[] } = {
+    winter: [1, 2, 3],
+    spring: [4, 5, 6],
+    summer: [7, 8, 9],
+    autumn: [10, 11, 12]
+  };
+  if (season in table) {
+    return table[season];
+  } else {
+    throw `Unexpected season string: ${season}`;
+  }
+}
+
 async function main() {
-  fetchProgramList();
+  const months = seasonToMonth("winter");
+  const year = 2020;
+  let result: any[] = [];
+  for (let month of months) {
+    result = result.concat(await fetchProgramList(year, month));
+  }
 }
 
 main();
